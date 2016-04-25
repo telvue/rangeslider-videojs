@@ -19,26 +19,26 @@
 	left: 0em;
 	right: 0em;
 	position:absolute;
-	background-color: #FFE800;
-	background: #FFE800;
-	background: -moz-linear-gradient(top, #FFE800, #A69700);
-	background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#FFE800), to(#A69700));
-	background: -webkit-linear-gradient(top, #FFE800, #A69700);
-	background: -o-linear-gradient(top, #FFE800, #A69700);
-	background: -ms-linear-gradient(top, #FFE800, #A69700);
-	background: linear-gradient(top, #FFE800, #A69700);
+	background-color: #33FF00;
+	background: #33FF00;
+	background: -moz-linear-gradient(top, #33FF00, #33CC00);
+	background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#33FF00), to(#33CC00));
+	background: -webkit-linear-gradient(top, #33FF00, #33CC00);
+	background: -o-linear-gradient(top, #33FF00, #33CC00);
+	background: -ms-linear-gradient(top, #33FF00, #33CC00);
+	background: linear-gradient(top, #33FF00, #33CC00);
 	opacity: 0.8;
 }
 
 .vjs-default-skin div.vjs-rangeslider-holder.locked > div.vjs-selectionbar-RS {
-	background-color: #FF6565;
-	background: #FF6565;
-	background: -moz-linear-gradient(top, #FF6565, #300000);
-	background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#FF6565), to(#300000));
-	background: -webkit-linear-gradient(top, #FF6565, #300000);
-	background: -o-linear-gradient(top, #FF6565, #300000);
-	background: -ms-linear-gradient(top, #FF6565, #300000);
-	background: linear-gradient(top, #FF6565, #300000);
+	background-color: #33FF00;
+	background: #33FF00;
+	background: -moz-linear-gradient(top, #33FF00, #33CC00);
+	background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#33FF00), to(#33CC00));
+	background: -webkit-linear-gradient(top, #33FF00, #33CC00);
+	background: -o-linear-gradient(top, #33FF00, #33CC00);
+	background: -ms-linear-gradient(top, #33FF00, #33CC00);
+	background: linear-gradient(top, #33FF00, #33CC00);
 }
 
 
@@ -65,39 +65,44 @@
 	height: 0;
 	border-left: 1em solid transparent;
 	border-right: 1em solid transparent;
-	border-top: 1em solid #FFF273;
-	margin-left: -1em;	
+	border-top: 1em solid #33FF00;
+	margin-left: -1em;
 	opacity: 0.8;
-	
+
 	position: absolute;
 	top: -1em;
 }
 .vjs-default-skin div.vjs-rangeslider-handle.active > div.vjs-selectionbar-arrow-RS {
-	border-top-color: #5F5FB3;
+	border-top-color: #33FF00;
 }
 
 .vjs-default-skin div.vjs-rangeslider-holder.locked .vjs-rangeslider-handle > div.vjs-selectionbar-arrow-RS {
-	border-top-color: #FF6565;
+	border-top-color: #33FF00;
 }
 
 .vjs-default-skin div.vjs-selectionbar-line-RS {
 	width: 1px;
 	height: 1em;
-	background-color: #FFF273;
-	
+	background-color: #33FF00;
+
 	position:absolute;
 	top: 0em;
 }
 .vjs-default-skin div.vjs-rangeslider-handle.active > div.vjs-selectionbar-line-RS {
-	background-color: #5F5FB3;
+	background-color: #33FF00;
 }
 
 .vjs-default-skin div.vjs-rangeslider-holder.locked .vjs-rangeslider-handle > div.vjs-selectionbar-line-RS {
-	background-color: #FF6565;
+	background-color: #33FF00;
 }
 
 
 /* Time Panel */
+.vjs-default-skin .vjs-time-text {
+	padding-left: 2px;
+	padding-right: 2px;
+}
+
 .vjs-default-skin .vjs-timepanel-RS{
 	width: 100%;
 	height: 1em;
@@ -130,6 +135,7 @@
 	height:116%;
 	padding-right: 0.3em;
 	padding-left: 0.3em;
+	display: inline-table;
 }
 .vjs-default-skin .vjs-timepanel-left-RS{
 	left:0.5%
@@ -138,8 +144,25 @@
 	left:92%
 }
 
+.vjs-default-skin .vjs-timepanel-left-sf-RS,
+.vjs-default-skin .vjs-timepanel-right-sf-RS {
+	display: inline-block;
+	float: right;
+}
 
+.vjs-default-skin .vjs-timepanel-left-sf-RS:hover,
+.vjs-default-skin .vjs-timepanel-right-sf-RS:hover,
+.vjs-default-skin .vjs-timepanel-left-sb-RS:hover,
+.vjs-default-skin .vjs-timepanel-right-sb-RS:hover,
+.vjs-default-skin .vjs-time-text:hover {
+	color: lightgrey;
+}
 
+.vjs-default-skin .vjs-timepanel-left-sb-RS,
+.vjs-default-skin .vjs-timepanel-right-sb-RS {
+	display: inline-block;
+	float: left;
+}
 
 /* Control Time Panel */
 .vjs-default-skin .vjs-controltimepanel-RS{

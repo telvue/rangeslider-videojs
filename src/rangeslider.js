@@ -89,11 +89,19 @@
             });
             player.on('firstplay', initialVideoFinished);
         } else {
-            player.one('playing', initialVideoFinished);
+            player.one('canplay', initialVideoFinished);
         }
 
+        // On player fullscreen change, force a reset of the panel positions.
+        player.on('fullscreenchange', function() {
+            player.rangeslider._setValuesLocked(
+                player.rangeslider._getArrowValue(0),
+                player.rangeslider._getArrowValue(1)
+            )
 
-        console.log("Loaded Plugin RangeSlider");
+        })
+
+
     }
     videojs.plugin('rangeslider', RangeSlider_);
 
@@ -120,6 +128,9 @@
 
         if (!options.hasOwnProperty('controlTime'))
             options.controlTime = true; // Show Control Time to set the arrows in the edition
+
+         if (!options.hasOwnProperty('round'))
+            options.round = true; // hide slider handles
 
         this.options = options;
 
@@ -153,6 +164,13 @@
             this.tp = this.components.TimePanel = this.box.TimePanel;
             this.tpl = this.components.TimePanelLeft = this.tp.TimePanelLeft;
             this.tpr = this.components.TimePanelRight = this.tp.TimePanelRight;
+
+            // Time panel step backwards/forwards.
+            this.tplsb = this.components.TimePanelLeftStepBackwards = this.tpl.TimePanelLeftStepBackwards;
+            this.tplsf = this.components.TimePanelLeftStepForwards = this.tpl.TimePanelLeftStepForwards;
+            this.tprsb = this.components.TimePanelRightStepBackwards = this.tpr.TimePanelRightStepBackwards;
+            this.tprsf = this.components.TimePanelRightStepForwards = this.tpr.TimePanelRightStepForwards;
+
             this.ctp = this.components.ControlTimePanel;
             this.ctpl = this.components.ControlTimePanelLeft = this.ctp.ControlTimePanelLeft;
             this.ctpr = this.components.ControlTimePanelRight = this.ctp.ControlTimePanelRight;
@@ -272,9 +290,21 @@
                 this.player.on("timeupdate", videojs.bind(this, this.bar.process_loop));
             }
         },
+        _getRoundedDuration: function() {
+            var duration = this.player.duration();
+
+            duration = typeof duration == 'undefined' ? 0 : duration;
+
+            if ( this.options.round ) {
+                return duration.round();
+            } else {
+                return duration.ceil();
+            }
+
+        },
         _getArrowValue: function (index) {
             var index = index || 0;
-            var duration = this.player.duration();
+            var duration = this._getRoundedDuration();
 
             duration = typeof duration == 'undefined' ? 0 : duration;
 
@@ -285,21 +315,21 @@
             return videojs.round(this._seconds(percentage / 100), this.updatePrecision - 1);
         },
         _percent: function (seconds) {
-            var duration = this.player.duration();
+            var duration = this._getRoundedDuration();
             if (isNaN(duration)) {
                 return 0;
             }
             return Math.min(1, Math.max(0, seconds / duration));
         },
         _seconds: function (percent) {
-            var duration = this.player.duration();
+            var duration = this._getRoundedDuration();
             if (isNaN(duration)) {
                 return 0;
             }
             return Math.min(duration, Math.max(0, percent * duration));
         },
         _reset: function () {
-            var duration = this.player.duration();
+            var duration = this._getRoundedDuration();
             this.tpl.el_.style.left = '0%';
             this.tpr.el_.style.left = '100%';
             this._setValuesLocked(0, duration);
@@ -348,7 +378,7 @@
                 return false;
             }
 
-            var duration = this.player.duration() || 0,
+            var duration = this._getRoundedDuration() || 0,
                 durationSel;
 
             var intRegex = /^\d+$/;//check if the objNew is an integer
@@ -539,6 +569,8 @@
 
     videojs.SeekRSBar.prototype.onMouseDown = function (event) {
         event.preventDefault();
+        event.stopPropagation();
+
         videojs.blockTextSelection();
 
         if (!this.rs.options.locked) {
@@ -553,18 +585,15 @@
         videojs.off(document, "mousemove", this.onMouseMove, false);
         videojs.off(document, "mouseup", this.onMouseUp, false);
         videojs.off(document, "touchmove", this.onMouseMove, false);
-        videojs.off(document, "touchend", this.onMouseUp, false);	
+        videojs.off(document, "touchend", this.onMouseUp, false);
     };
 
     videojs.SeekRSBar.prototype.onMouseMove = function (event) {
-        var left = this.calculateDistance(event);
+        var left = this.calculateDistance(event),
+           index = this.rs.left.pressed ? 0 : 1;
 
-        if (this.rs.left.pressed)
-            this.setPosition(0, left);
-        else if (this.rs.right.pressed)
-            this.setPosition(1, left);
-
-        this.player_.currentTime(this.rs._seconds(left));
+        this.setPosition(index, left);
+        this.player_.currentTime( this.rs._getArrowValue(index) );
 
         // Trigger slider change
         if (this.rs.left.pressed || this.rs.right.pressed) {
@@ -617,22 +646,23 @@
             //-- Panel
             var TimeText = videojs.formatTime(this.rs._seconds(left)),
                 tplTextLegth = tpl.children[0].innerHTML.length;
+
             var MaxP, MinP, MaxDisP;
             if (tplTextLegth <= 4) //0:00
-                MaxDisP = this.player_.isFullScreen ? 3.25 : 6.5;
+                MaxDisP = this.player_.isFullscreen() ? 3.25 : 6.5;
             else if (tplTextLegth <= 5)//00:00
-                MaxDisP = this.player_.isFullScreen ? 4 : 8;
+                MaxDisP = this.player_.isFullscreen() ? 4 : 8;
             else//0:00:00
-                MaxDisP = this.player_.isFullScreen ? 5 : 10;
+                MaxDisP = this.player_.isFullscreen() ? 5 : 10;
             if (TimeText.length <= 4) { //0:00
-                MaxP = this.player_.isFullScreen ? 97 : 93;
-                MinP = this.player_.isFullScreen ? 0.1 : 0.5;
+                MaxP = this.player_.isFullscreen() ? 95 : 85;
+                MinP = this.player_.isFullscreen() ? 0.1 : 0.5;
             } else if (TimeText.length <= 5) {//00:00
-                MaxP = this.player_.isFullScreen ? 96 : 92;
-                MinP = this.player_.isFullScreen ? 0.1 : 0.5;
+                MaxP = this.player_.isFullscreen() ? 94 : 83;
+                MinP = this.player_.isFullscreen() ? 0.1 : 0.5;
             } else {//0:00:00
-                MaxP = this.player_.isFullScreen ? 95 : 91;
-                MinP = this.player_.isFullScreen ? 0.1 : 0.5;
+                MaxP = this.player_.isFullscreen() ? 93 : 80;
+                MinP = this.player_.isFullscreen() ? 0.1 : 0.5;
             }
 
             if (index === 0) {
@@ -952,17 +982,112 @@
         /** @constructor */
         init: function (player, options) {
             videojs.Component.call(this, player, options);
+            this.on('mousedown', this.onMouseDown);
         }
     });
 
     videojs.TimePanelLeft.prototype.init_ = function () {
         this.rs = this.player_.rangeslider;
+        this.newTime;
+    };
+
+    // On panel click, move arrow to players current time.
+    videojs.TimePanelLeft.prototype.onMouseDown = function(event) {
+        event.stopPropagation();
+
+        this.newTime = this.player_.currentTime();
+        this.rs._setValuesLocked(this.newTime, this.rs._getArrowValue(1))
+
+        this.rs._triggerSliderChange();
+    };
+
+    videojs.TimePanelLeft.prototype.options_ = {
+        children: {
+            'TimePanelLeftStepForwards': {},
+            'TimePanelLeftStepBackwards': {}
+        }
     };
 
     videojs.TimePanelLeft.prototype.createEl = function () {
         return videojs.Component.prototype.createEl.call(this, 'div', {
             className: 'vjs-timepanel-left-RS',
             innerHTML: '<span class="vjs-time-text">00:00</span>'
+        });
+    };
+
+    /**
+     * This is the left time panel step forwards button
+     * @param {videojs.Player|Object} player
+     * @param {Object=} options
+     * @constructor
+     */
+
+    videojs.TimePanelLeftStepForwards = videojs.Component.extend({
+        /** @constructor */
+        init: function (player, options) {
+            videojs.Component.call(this, player, options);
+            this.on('mousedown', this.onMouseDown);
+        }
+    });
+
+    videojs.TimePanelLeftStepForwards.prototype.init_ = function () {
+        this.rs = this.player_.rangeslider;
+        this.newTime;
+    };
+
+    videojs.TimePanelLeftStepForwards.prototype.onMouseDown = function(event) {
+        event.stopPropagation();
+
+        // Step forwards 1 second
+        this.newTime = this.rs._getArrowValue(0) + 1;
+        this.rs._setValuesLocked(this.newTime, this.rs._getArrowValue(1))
+        this.player_.currentTime(this.newTime);
+
+        this.rs._triggerSliderChange();
+    };
+
+    videojs.TimePanelLeftStepForwards.prototype.createEl = function () {
+        return videojs.Component.prototype.createEl.call(this, 'div', {
+            className: 'vjs-timepanel-left-sf-RS',
+            innerHTML: '<i class="fa fa-step-forward" aria-hidden="true"></i>'
+        });
+    };
+
+    /**
+     * This is the left time panel step backwards button
+     * @param {videojs.Player|Object} player
+     * @param {Object=} options
+     * @constructor
+     */
+
+    videojs.TimePanelLeftStepBackwards = videojs.Component.extend({
+        /** @constructor */
+        init: function (player, options) {
+            videojs.Component.call(this, player, options);
+            this.on('mousedown', this.onMouseDown);
+        }
+    });
+
+    videojs.TimePanelLeftStepBackwards.prototype.init_ = function () {
+        this.rs = this.player_.rangeslider;
+        this.newTime;
+    };
+
+    videojs.TimePanelLeftStepBackwards.prototype.onMouseDown = function(event) {
+        event.stopPropagation();
+
+        // Step backwards 1 second
+        this.newTime = this.rs._getArrowValue(0) - 1;
+        this.rs._setValuesLocked(this.newTime, this.rs._getArrowValue(1))
+        this.player_.currentTime(this.newTime);
+
+        this.rs._triggerSliderChange();
+    };
+
+    videojs.TimePanelLeftStepBackwards.prototype.createEl = function () {
+        return videojs.Component.prototype.createEl.call(this, 'div', {
+            className: 'vjs-timepanel-left-sb-RS',
+            innerHTML: '<i class="fa fa-step-backward" aria-hidden="true"></i>'
         });
     };
 
@@ -977,6 +1102,7 @@
         /** @constructor */
         init: function (player, options) {
             videojs.Component.call(this, player, options);
+            this.on('mousedown', this.onMouseDown);
         }
     });
 
@@ -984,10 +1110,104 @@
         this.rs = this.player_.rangeslider;
     };
 
+    // On panel click, move arrow to players current time.
+    videojs.TimePanelRight.prototype.onMouseDown = function(event) {
+        event.stopPropagation();
+
+        this.newTime = this.player_.currentTime();
+        this.rs._setValuesLocked(this.rs._getArrowValue(0), this.newTime)
+
+        this.rs._triggerSliderChange();
+    };
+
+    videojs.TimePanelRight.prototype.options_ = {
+        children: {
+            'TimePanelRightStepForwards': {},
+            'TimePanelRightStepBackwards': {}
+        }
+    };
+
     videojs.TimePanelRight.prototype.createEl = function () {
         return videojs.Component.prototype.createEl.call(this, 'div', {
             className: 'vjs-timepanel-right-RS',
             innerHTML: '<span class="vjs-time-text">00:00</span>'
+        });
+    };
+
+    /**
+     * This is the right time panel step forwards button
+     * @param {videojs.Player|Object} player
+     * @param {Object=} options
+     * @constructor
+     */
+
+    videojs.TimePanelRightStepForwards = videojs.Component.extend({
+        /** @constructor */
+        init: function (player, options) {
+            videojs.Component.call(this, player, options);
+            this.on('mousedown', this.onMouseDown);
+        }
+    });
+
+    videojs.TimePanelRightStepForwards.prototype.init_ = function () {
+        this.rs = this.player_.rangeslider;
+        this.newTime;
+    };
+
+    videojs.TimePanelRightStepForwards.prototype.onMouseDown = function(event) {
+        event.stopPropagation();
+
+        // Step forwards 1 second
+        this.newTime = this.rs._getArrowValue(1) + 1;
+        this.rs._setValuesLocked(this.rs._getArrowValue(0), this.newTime)
+        this.player_.currentTime(this.newTime);
+
+        this.rs._triggerSliderChange();
+    };
+
+
+    videojs.TimePanelRightStepForwards.prototype.createEl = function () {
+        return videojs.Component.prototype.createEl.call(this, 'div', {
+            className: 'vjs-timepanel-left-sf-RS',
+            innerHTML: '<i class="fa fa-step-forward" aria-hidden="true"></i>'
+        });
+    };
+
+    /**
+     * This is the right time panel step backwards button
+     * @param {videojs.Player|Object} player
+     * @param {Object=} options
+     * @constructor
+     */
+
+    videojs.TimePanelRightStepBackwards = videojs.Component.extend({
+        /** @constructor */
+        init: function (player, options) {
+            videojs.Component.call(this, player, options);
+            this.on('mousedown', this.onMouseDown);
+        }
+    });
+
+    videojs.TimePanelRightStepBackwards.prototype.init_ = function () {
+        this.rs = this.player_.rangeslider;
+    };
+
+    videojs.TimePanelRightStepBackwards.prototype.onMouseDown = function(event) {
+        event.stopPropagation();
+
+        // Step forwards 1 second
+        this.newTime = this.rs._getArrowValue(1) - 1;
+        this.rs._setValuesLocked(this.rs._getArrowValue(0), this.newTime)
+        this.player_.currentTime(this.newTime);
+
+        this.rs._triggerSliderChange();
+    };
+
+
+    videojs.TimePanelRightStepBackwards.prototype.createEl = function () {
+        return videojs.Component.prototype.createEl.call(this, 'div', {
+            className: 'vjs-timepanel-left-sb-RS',
+            innerHTML: '<i class="fa fa-step-backward" aria-hidden="true"></i>'
         });
     };
 
