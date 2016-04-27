@@ -296,9 +296,9 @@
             duration = typeof duration == 'undefined' ? 0 : duration;
 
             if ( this.options.round ) {
-                return duration.round();
+                return Math.round(duration);
             } else {
-                return duration.ceil();
+                return Math.ceil(duration);
             }
 
         },
